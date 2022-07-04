@@ -1,0 +1,61 @@
+# Service name should be equal to a feature name as defined in metadata
+# The pipeline will pass it as a 'feature' variable in generated je.env.yml
+service: ${file(je.env.yml):feature}
+
+plugins:
+  - serverless-python-requirements
+  
+custom:
+ pythonRequirements:
+   dockerizePip: non-linux
+
+provider:
+ name: aws
+ timeout: 20
+ iamManagedPolicies:
+   - 'arn:aws:iam::aws:policy/AmazonEC2FullAccess'
+   - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+   - 'arn:aws:iam::aws:policy/AWSLambdaFullAccess'
+ stage: ${file(je.env.yml):stage}
+ region: ${file(je.env.yml):region}
+ accountId: ${file(je.env.yml):accountId}
+ environment: # Service wide environment variables
+   FEATURE: ${file(je.env.yml):feature}
+   FEATURE_VERSION: ${file(je.env.yml):version}
+   ENVIRONMENT: ${file(je.env.yml):environment}
+   AWS_ACCOUNT_ID: ${file(je.env.yml):accountId}
+   HOSTED_ZONE: ${file(je.env.yml):hostedZone}
+   PRIMARY_REGION: eu-west-1
+   SECONDARY_REGION: eu-central-1
+   ALLOWED_RUNTIME: 250000
+   PUMP_MESSAGES_NUM: 2
+   PUMP_MESSAGES_DELAY: 1000
+   PULSE_DELAY: 2000
+
+functions:
+ cloudfrontcomparer:
+   handler: cloudfrontcomparer/cloudfrontcomparer.lambda_handler
+   description: to compare cloudfront IPs.
+   runtime: python3.7
+   events:
+     - schedule:
+         rate: "rate(5 minutes)"
+         enabled: true  
+ cloudfrontfilter:
+   handler: cloudfrontfilter/cloudfrontfilter.lambda_handler
+   description: to filter out cloudfront IPs.
+   runtime: python3.7
+   events:
+     - schedule:
+         rate: "rate(5 minutes)"
+         enabled: true
+ cloudfrontparser:
+   handler: cloudfrontparser/cloudfrontparser.lambda_handler
+   description: to parse the changes cloudfront IPs.
+   # Added a tomeout of 10 seconds as this lambda runs a little long
+   timeout: 20
+   runtime: python3.7
+   events:
+     - schedule:
+         rate: "rate(5 minutes)"
+         enabled: false

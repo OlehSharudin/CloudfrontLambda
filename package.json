@@ -1,0 +1,11 @@
+{
+  "name": "cloudfrontlambda",
+  "description": "To have a cloudfront ip list up to date automatically",
+  "version": "0.1.0",
+  "dependencies": {
+    "serverless": "^1.54.0"
+  },
+  "devDependencies": {
+    "serverless-python-requirements": "^4.3.0"
+  }
+}
